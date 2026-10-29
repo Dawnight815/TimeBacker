@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#05070f" />
+<title>时间备忘录 · 把说的话串成一条线</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- 背景光晕 -->
+  <div class="aurora" aria-hidden="true">
+    <span class="aurora__blob aurora__blob--1"></span>
+    <span class="aurora__blob aurora__blob--2"></span>
+    <span class="aurora__blob aurora__blob--3"></span>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true"></span>
+      <h1>时间备忘录</h1>
+      <span class="badge" id="count">0</span>
+      <button type="button" class="savestate is-ok" id="saveState" title="数据保存在本机浏览器里">
+        <span class="savestate__dot" aria-hidden="true"></span>
+        <span class="savestate__text" id="saveStateText">已保存</span>
+      </button>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn--icon" id="moreBtn" aria-label="备份与恢复" title="备份与恢复">⋯</button>
+      <button type="button" class="btn" id="clearBtn">
+        <span aria-hidden="true">🧹</span><span class="btn__label">清空</span>
+      </button>
+      <button type="button" class="btn btn--icon" id="themeBtn" aria-label="切换明暗主题" title="切换明暗主题">
+        <span id="themeIcon" aria-hidden="true">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 搜索 + 按类型归类查看 -->
+  <nav class="filterbar" id="filterBar" aria-label="搜索与筛选" hidden>
+    <div class="searchbox">
+      <span class="searchbox__icon" aria-hidden="true">🔍</span>
+      <input
+        type="search"
+        id="searchInput"
+        class="searchbox__input"
+        placeholder="搜索内容，或输入日期如 10-29、今天"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="按内容或日期搜索"
+      />
+      <button type="button" class="searchbox__clear" id="searchClear" aria-label="清空搜索" hidden>×</button>
+    </div>
+    <div class="filterbar__row">
+      <span class="filterbar__hint" id="searchHint"></span>
+      <div class="filterbar__chips" id="filterChips"></div>
+    </div>
+  </nav>
+
+  <div class="stage">
+    <main class="timeline-wrap" id="scrollArea">
+      <div class="timeline is-empty" id="timeline">
+        <div class="nowmark" id="nowMark" aria-hidden="true">
+          <span class="nowmark__line"></span>
+          <span class="nowmark__dot"></span>
+          <span class="nowmark__label">现在</span>
+        </div>
+      </div>
+
+      <div class="empty" id="empty">
+        <div class="empty__bubble" aria-hidden="true"></div>
+        <p class="empty__title">说一句话，它会按时间挂到这条线上 ✨</p>
+        <p class="empty__sub">选个类型和时间再发送 · Enter 发送 · Shift + Enter 换行 · 内容多了可以上下滑动</p>
+      </div>
+    </main>
+
+    <button type="button" class="jump" id="jumpBtn">
+      <span aria-hidden="true">↑</span> 回到最新
+    </button>
+  </div>
+
+  <form class="composer" id="composer" autocomplete="off">
+    <div class="composer__box">
+      <textarea
+        id="input"
+        rows="1"
+        maxlength="300"
+        placeholder="想说点什么…"
+        aria-label="输入要挂上时间轴的文字"
+      ></textarea>
+      <button type="submit" class="send" id="sendBtn">
+        <span>挂上去</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+          <path d="M4 12h13M12 5.5 18.5 12 12 18.5" fill="none" stroke="currentColor"
+                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="tagbar" id="tagBar">
+      <span class="tagbar__label">类型</span>
+      <button type="button" class="tag-chip tag-chip--none is-active" id="tagNone">
+        <span>无</span>
+      </button>
+      <button type="button" class="tag-chip tag-chip--manage" id="tagManage" title="管理类型标签">
+        <span aria-hidden="true">＋</span><span class="tag-chip__text">类型</span>
+      </button>
+    </div>
+    <div class="composer__meta">
+      <div class="timepick">
+        <span class="timepick__icon" aria-hidden="true">🕒</span>
+        <input
+          type="datetime-local"
+          id="timeInput"
+          class="timepick__input"
+          step="60"
+          aria-label="自定义这条气泡的时间"
+          title="默认跟随当前时间，点开可以改成任意时间"
+        />
+        <button type="button" class="timepick__now" id="nowBtn" title="恢复为当前时间">现在</button>
+      </div>
+      <span class="meta-hint">Enter 发送 · Shift + Enter 换行</span>
+      <span class="meta-count"><b id="chars">0</b> / 300</span>
+    </div>
+  </form>
+
+  <!-- 类型标签管理 -->
+  <div class="sheet" id="tagSheet" hidden>
+    <div class="sheet__backdrop" data-close="1"></div>
+    <div class="sheet__panel" role="dialog" aria-modal="true" aria-labelledby="tagSheetTitle">
+      <header class="sheet__head">
+        <h2 id="tagSheetTitle">类型标签</h2>
+        <button type="button" class="sheet__close" id="tagSheetClose" aria-label="关闭">×</button>
+      </header>
+      <div class="taglist" id="tagList"></div>
+      <form class="tagadd" id="tagAddForm" autocomplete="off">
+        <input type="text" id="tagAddInput" maxlength="8" placeholder="新类型，例如：读书" aria-label="新的类型名称" />
+        <button type="submit" id="tagAddBtn">添加</button>
+      </form>
+      <p class="tagadd__status" id="tagStatus" role="status" aria-live="polite"></p>
+      <p class="sheet__hint">改名会同步到已经用了这个类型的气泡；删除后，这些气泡会变回「无类型」。</p>
+    </div>
+  </div>
+
+  <!-- 导入备份用的隐藏文件选择器（必须在 app.js 之前，否则脚本拿不到它） -->
+  <input type="file" id="importFile" accept=".json,application/json" hidden />
+
+  <script src="app.js"></script>
+</body>
+</html>
